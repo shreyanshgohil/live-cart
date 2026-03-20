@@ -1,0 +1,38 @@
+{
+  "name": "live-cart",
+  "version": "1.0.0",
+  "description": "Live Cart",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "local": "set SERVER=local&& nodemon server/server.js",
+    "dev": "sudo SERVER=dev pm2 start server/server.js -i max",
+    "live": "sudo SERVER=live pm2 start server/server.js -i max"
+  },
+  "author": "Gaurang Dholariya",
+  "license": "ISC",
+  "dependencies": {
+    "@countrystatecity/countries": "^1.0.5",
+    "agenda": "^4.3.0",
+    "@shopify/shopify-api": "^11.8.1",
+    "aws-sdk": "^2.1648.0",
+    "axios": "^1.5.0",
+    "common-utils": "file:common-utils",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "form-data": "^4.0.4",
+    "helmet": "^4.6.0",
+    "html-entities": "^2.3.3",
+    "http-proxy-middleware": "^3.0.5",
+    "jsonwebtoken": "^8.5.1",
+    "mime": "^3.0.0",
+    "mongoose": "^8.10.1",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^6.9.16",
+    "shopify-call": "file:shopify-call",
+    "uuid": "^10.0.0"
+  }
+}

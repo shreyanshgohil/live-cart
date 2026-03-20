@@ -1,0 +1,9 @@
+node_modules/
+.idea/
+package-lock.json
+logs/
+BKP_LOCAL/
+.github
+
+server/src/config/.env_local
+server/src/config/.env_live
