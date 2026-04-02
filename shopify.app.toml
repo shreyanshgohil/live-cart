@@ -1,0 +1,24 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "dee59e6f43ba234e0475fbd4d61da964"
+name = "live-cart-1"
+application_url = "https://0d5e-2401-4900-8fc6-2d44-64a3-88f1-e528-456a.ngrok-free.app/api"
+embedded = true
+
+[webhooks]
+api_version = "2026-04"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_content,read_files,write_content,write_files,write_products,read_themes"
+use_legacy_install_flow=true
+
+
+[auth]
+redirect_urls = [
+  "https://0d5e-2401-4900-8fc6-2d44-64a3-88f1-e528-456a.ngrok-free.app/api",
+  "https://0d5e-2401-4900-8fc6-2d44-64a3-88f1-e528-456a.ngrok-free.app/api/auth/callback"
+]
+
+[build]
+automatically_update_urls_on_dev = true

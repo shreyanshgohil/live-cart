@@ -5,7 +5,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "local": "set SERVER=local&& nodemon server/server.js",
+    "local": "export SERVER=local&& nodemon server/server.js",
     "dev": "sudo SERVER=dev pm2 start server/server.js -i max",
     "live": "sudo SERVER=live pm2 start server/server.js -i max"
   },

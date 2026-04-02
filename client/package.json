@@ -28,7 +28,7 @@
     "yup": "^1.4.0"
   },
   "scripts": {
-    "start": "set NODE_ENV=local&& webpack serve --mode development",
+    "start": "export NODE_ENV=local&& webpack serve --mode development",
     "production": "set NODE_ENV=production&& webpack --mode production"
   },
   "eslintConfig": {
