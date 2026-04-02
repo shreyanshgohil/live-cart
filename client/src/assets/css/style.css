@@ -122,3 +122,15 @@
     border-radius: 8px;
 }
 
+/* Center the "Items" column in cart dashboard table */
+.cart-table-center-items table th:nth-child(4),
+.cart-table-center-items table td:nth-child(4) {
+    text-align: center;
+}
+
+/* Center the "Qty" column in cart item modal table */
+.cart-items-modal-table table th:nth-child(3),
+.cart-items-modal-table table td:nth-child(3) {
+    text-align: center;
+}
+

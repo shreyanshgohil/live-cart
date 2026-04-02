@@ -14,6 +14,7 @@ const dummyCarts = [
     id: "CART-1001",
     customerName: "John Carter",
     email: "john.carter@example.com",
+    phone: "+1 (415) 555-0123",
     totalAmount: 149.5,
     currency: "USD",
     itemCount: 3,
@@ -29,6 +30,7 @@ const dummyCarts = [
     id: "CART-1002",
     customerName: "Ava Mitchell",
     email: "ava.mitchell@example.com",
+    phone: "+1 (628) 555-0194",
     totalAmount: 89.0,
     currency: "USD",
     itemCount: 2,
@@ -43,6 +45,7 @@ const dummyCarts = [
     id: "CART-1003",
     customerName: "Noah Walker",
     email: "noah.walker@example.com",
+    phone: "+1 (510) 555-0148",
     totalAmount: 214.75,
     currency: "USD",
     itemCount: 4,
@@ -95,28 +98,30 @@ export default function HomePage() {
       subtitle="Track customer carts and quickly review the items added by each shopper."
     >
       <LegacyCard>
-        <DataTable
-          columnContentTypes={[
-            "text",
-            "text",
-            "text",
-            "numeric",
-            "text",
-            "text",
-            "text",
-          ]}
-          headings={[
-            "Customer name",
-            "Email",
-            "Cart amount",
-            "Items",
-            "Last updated",
-            "Status",
-            "Details",
-          ]}
-          rows={cartRows}
-          footerContent={`${dummyCarts.length} carts shown`}
-        />
+        <div className="cart-table-center-items">
+          <DataTable
+            columnContentTypes={[
+              "text",
+              "text",
+              "text",
+              "text",
+              "text",
+              "text",
+              "text",
+            ]}
+            headings={[
+              "Customer name",
+              "Email",
+              "Cart amount",
+              "Items",
+              "Last updated",
+              "Status",
+              "Details",
+            ]}
+            rows={cartRows}
+            footerContent={`${dummyCarts.length} carts shown`}
+          />
+        </div>
       </LegacyCard>
 
       <Modal
@@ -135,13 +140,18 @@ export default function HomePage() {
                 Cart ID: {selectedCart.id} | Total:{" "}
                 {formatPrice(selectedCart.currency, selectedCart.totalAmount)}
               </Text>
+              <Text as="p" variant="bodyMd">
+                Email: {selectedCart.email} | Phone: {selectedCart.phone}
+              </Text>
               <div style={{ marginTop: "12px" }}>
                 <LegacyCard>
-                  <DataTable
-                    columnContentTypes={["text", "text", "numeric", "text", "text"]}
-                    headings={["Item", "SKU", "Qty", "Price", "Line total"]}
-                    rows={selectedCartItemRows}
-                  />
+                  <div className="cart-items-modal-table">
+                    <DataTable
+                      columnContentTypes={["text", "text", "text", "text", "text"]}
+                      headings={["Item", "SKU", "Qty", "Price", "Line total"]}
+                      rows={selectedCartItemRows}
+                    />
+                  </div>
                 </LegacyCard>
               </div>
             </>
