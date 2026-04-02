@@ -1,5 +1,7 @@
 import express from 'express';
 import {
+    cartAnalyticsController,
+    cartSnapshotController,
     contactSupportController,
     generateTokenController,
     shopifyAuthController,
@@ -17,6 +19,9 @@ router.get("/auth/callback", shopifyAuthController.shopifyCallbackFn); /* Shopif
 router.get("/success-plan", shopifyAuthController.successPlanFn);
 
 router.post('/generate-token', generateTokenController.createToken);
+router.get('/cart-analytics/static', cartAnalyticsController.getStaticCartAnalyticsFn);
+router.post('/carts/sync', cartSnapshotController.postSyncCartFn);
+router.get('/carts', cartSnapshotController.getCartsForShopFn);
 
 router.post('/test-route', verifyToken, contactSupportController.addContactFormFn);
 
