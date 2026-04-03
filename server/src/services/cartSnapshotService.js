@@ -22,10 +22,50 @@ const guestNameFromEmail = (email) => {
   return local ? local.replace(/[._-]+/g, " ") : "Guest";
 };
 
+/**
+ * Guest checkout often leaves buyerIdentity.email/phone empty; logged-in customers
+ * are usually on buyerIdentity.customer (displayName, email, etc.).
+ */
+const resolveBuyerFromCart = (cart) => {
+  const bi = cart?.buyerIdentity || {};
+  const c = bi.customer || {};
+
+  const email =
+    (bi.email && String(bi.email).trim()) ||
+    (c.email && String(c.email).trim()) ||
+    "";
+
+  const phone =
+    (bi.phone && String(bi.phone).trim()) ||
+    (c.phone && String(c.phone).trim()) ||
+    "";
+
+  const displayName = (c.displayName && String(c.displayName).trim()) || "";
+  const first = (c.firstName && String(c.firstName).trim()) || "";
+  const last = (c.lastName && String(c.lastName).trim()) || "";
+  const nameFromParts = [first, last].filter(Boolean).join(" ").trim();
+
+  let customerName = displayName || nameFromParts;
+  if (!customerName && email) {
+    customerName = guestNameFromEmail(email);
+  }
+  if (!customerName) {
+    customerName = "Guest";
+  }
+
+  return {
+    customerEmail: email || "Not available",
+    customerPhone: phone || "Not available",
+    customerName,
+    customerGid: c.id || "",
+  };
+};
+
 const mapStorefrontCartToLineItems = (cart) => {
   return (cart?.lines?.edges || []).map((edge) => {
     const node = edge?.node || {};
-    const productTitle = node?.merchandise?.product?.title || "Untitled product";
+    const productTitle =
+      node?.merchandise?.product?.title || "Untitled product";
     const variantTitle = node?.merchandise?.title || "";
     const quantity = Number(node?.quantity || 0);
     const lineAmount = Number(node?.cost?.totalAmount?.amount || 0);
@@ -56,10 +96,12 @@ const buildGraphPayloadFromCart = (cart, fallbackCartGid) => {
     currencyCode: row.currencyCode,
   }));
 
+  const buyer = resolveBuyerFromCart(cart);
+
   return {
     cartId: cart?.id || fallbackCartGid,
-    customerEmail: cart?.buyerIdentity?.email || "Not available",
-    customerPhone: cart?.buyerIdentity?.phone || "Not available",
+    customerEmail: buyer.customerEmail,
+    customerPhone: buyer.customerPhone,
     totalQuantity: Number(cart?.totalQuantity || 0),
     totalAmount: Number(cart?.cost?.totalAmount?.amount || 0),
     currencyCode: cart?.cost?.totalAmount?.currencyCode || "USD",
@@ -70,26 +112,31 @@ const buildGraphPayloadFromCart = (cart, fallbackCartGid) => {
 
 const snapshotDocFromStorefrontCart = (shopDomain, cart) => {
   const cartGid = cart?.id;
-  const customerEmail = cart?.buyerIdentity?.email || "Not available";
-  const customerPhone = cart?.buyerIdentity?.phone || "Not available";
+  const buyer = resolveBuyerFromCart(cart);
   const items = mapStorefrontCartToLineItems(cart);
 
   return {
     shopDomain,
     cartGid,
-    customerEmail,
-    customerPhone,
-    customerName: guestNameFromEmail(customerEmail),
+    customerEmail: buyer.customerEmail,
+    customerPhone: buyer.customerPhone,
+    customerName: buyer.customerName,
     totalAmount: Number(cart?.cost?.totalAmount?.amount || 0),
     currencyCode: cart?.cost?.totalAmount?.currencyCode || "USD",
     totalQuantity: Number(cart?.totalQuantity || 0),
-    shopifyCartUpdatedAt: cart?.updatedAt ? new Date(cart.updatedAt) : new Date(),
+    shopifyCartUpdatedAt: cart?.updatedAt
+      ? new Date(cart.updatedAt)
+      : new Date(),
     status: "Active",
     items,
   };
 };
 
-const fetchStorefrontCartOrThrow = async ({ shopDomain, storefrontAccessToken, cartId }) => {
+const fetchStorefrontCartOrThrow = async ({
+  shopDomain,
+  storefrontAccessToken,
+  cartId,
+}) => {
   const normalizedCartId = normalizeCartId(cartId);
   const storefrontResponse = await fetchCartFromStorefront({
     shopDomain,
@@ -98,7 +145,9 @@ const fetchStorefrontCartOrThrow = async ({ shopDomain, storefrontAccessToken, c
   });
 
   if (storefrontResponse?.errors?.length) {
-    throw new Error(storefrontResponse.errors[0]?.message || "Storefront API error");
+    throw new Error(
+      storefrontResponse.errors[0]?.message || "Storefront API error",
+    );
   }
 
   const cart = storefrontResponse?.data?.cart;
@@ -109,7 +158,11 @@ const fetchStorefrontCartOrThrow = async ({ shopDomain, storefrontAccessToken, c
   return { cart, normalizedCartId };
 };
 
-const syncCartFromStorefront = async ({ shopDomain, storefrontAccessToken, cartId }) => {
+const syncCartFromStorefront = async ({
+  shopDomain,
+  storefrontAccessToken,
+  cartId,
+}) => {
   const { cart } = await fetchStorefrontCartOrThrow({
     shopDomain,
     storefrontAccessToken,

@@ -12,6 +12,14 @@ const STOREFRONT_CART_QUERY = `
       buyerIdentity {
         email
         phone
+        customer {
+          id
+          displayName
+          firstName
+          lastName
+          email
+          phone
+        }
       }
       cost {
         totalAmount {
