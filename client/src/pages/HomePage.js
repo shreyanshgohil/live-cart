@@ -12,13 +12,6 @@ import {
 import { ApiCall } from "../helper/axios";
 import { config_variable } from "../helper/commonApi";
 
-/** Temporary: same values you use server-side; later pass from secure context / env */
-const DEV_STOREFRONT_SYNC = {
-  shopDomain: "text-to-audio.myshopify.com",
-  storefrontAccessToken: "68075787b6aecca4483ff394c240d793",
-  cartId: "hWNADpbnWHMSl2r6HMm4cQdN",
-};
-
 const formatPrice = (currency, amount) =>
   `${currency} ${Number(amount || 0).toFixed(2)}`;
 
@@ -41,8 +34,6 @@ export default function HomePage() {
   const [cartsFromDb, setCartsFromDb] = useState([]);
   const [cartsLoading, setCartsLoading] = useState(true);
   const [cartsError, setCartsError] = useState("");
-  const [syncLoading, setSyncLoading] = useState(false);
-  const [syncMessage, setSyncMessage] = useState("");
 
   const loadCartsFromDatabase = useCallback(async () => {
     const shop = config_variable?.shop_name;
@@ -78,28 +69,6 @@ export default function HomePage() {
     loadCartsFromDatabase();
   }, [loadCartsFromDatabase]);
 
-  const handleSyncCartFromShopify = useCallback(async () => {
-    try {
-      setSyncLoading(true);
-      setSyncMessage("");
-      const response = await ApiCall(
-        "POST",
-        "/carts/sync",
-        DEV_STOREFRONT_SYNC,
-      );
-
-      if (response?.data?.status === "success") {
-        await loadCartsFromDatabase();
-      } else {
-        setSyncMessage(response?.data?.message || "Sync failed.");
-      }
-    } catch {
-      setSyncMessage("Sync failed.");
-    } finally {
-      setSyncLoading(false);
-    }
-  }, [loadCartsFromDatabase]);
-
   const openItemsModal = (cart) => {
     setSelectedCart(cart);
     setIsItemsModalOpen(true);
@@ -130,24 +99,8 @@ export default function HomePage() {
   ]);
 
   return (
-    <Page
-      title="Cart Dashboard"
-      secondaryActions={[
-        {
-          content: "Sync cart from Shopify",
-          onAction: handleSyncCartFromShopify,
-          loading: syncLoading,
-        },
-      ]}
-    >
+    <Page title="Cart Dashboard">
       <LegacyCard>
-        {syncMessage ? (
-          <LegacyCard.Section>
-            <Text as="p" variant="bodyMd" tone="critical">
-              {syncMessage}
-            </Text>
-          </LegacyCard.Section>
-        ) : null}
         <LegacyCard.Section>
           {cartsLoading ? (
             <div style={{ textAlign: "center", padding: "32px 0" }}>
@@ -159,8 +112,8 @@ export default function HomePage() {
             </Text>
           ) : !cartsFromDb.length ? (
             <Text as="p" variant="bodyMd" tone="subdued">
-              No carts in the database yet. Use &quot;Sync cart from
-              Shopify&quot; or POST /api/carts/sync to save a cart.
+              No carts in the database yet. Carts appear here when Shopify
+              sends cart webhooks or your backend saves snapshots.
             </Text>
           ) : (
             <div className="cart-table-center-items">

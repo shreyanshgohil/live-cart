@@ -254,22 +254,6 @@ const fetchStorefrontCartOrThrow = async ({
   return { cart, normalizedCartId };
 };
 
-const syncCartFromStorefront = async ({
-  shopDomain,
-  storefrontAccessToken,
-  cartId,
-}) => {
-  const { cart } = await fetchStorefrontCartOrThrow({
-    shopDomain,
-    storefrontAccessToken,
-    cartId,
-  });
-
-  const doc = snapshotDocFromStorefrontCart(shopDomain, cart);
-  const saved = await upsertCartSnapshot(doc);
-  return formatSnapshotForClient(saved);
-};
-
 const formatSnapshotForClient = (row) => {
   if (!row) {
     return null;
@@ -360,6 +344,5 @@ export {
   listCartsForShop,
   normalizeCartId,
   snapshotDocFromAdminCartWebhook,
-  syncCartFromStorefront,
   syncCartSnapshotFromAdminCartWebhook,
 };
