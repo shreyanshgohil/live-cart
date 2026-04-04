@@ -18,7 +18,8 @@ export const app_uninstall = async (req, res) => {
                 // 'trial_days' : trialDays
             }
             let response = await clientStoresSchema.updateOne({ store_name: shop }, {
-                $set: update_data
+                $set: update_data,
+                $unset: { storefront_access_token: '' },
             });
 
             if (response) {

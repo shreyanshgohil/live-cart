@@ -12,6 +12,7 @@ import {
   webhoookSubscritionCreate,
 } from "../helper/graphql_query_template.js";
 import { handleError } from "../helper/response_handler.js";
+import { ensureLiveCartStorefrontAccessToken } from "../services/storefrontTokenService.js";
 
 const shopifyAuth = shopifyApi({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -257,6 +258,25 @@ const shopifyCallbackFn = async (req, res) => {
               new: true,
             },
           );
+
+          try {
+            const { accessToken: storefrontToken } =
+              await ensureLiveCartStorefrontAccessToken(
+                access_token,
+                shopData?.myshopifyDomain,
+              );
+            if (storefrontToken) {
+              await clientStoresSchema.updateOne(
+                { store_name: shopData?.myshopifyDomain },
+                { $set: { storefront_access_token: storefrontToken } },
+              );
+            }
+          } catch (sfErr) {
+            console.error(
+              "storefront_access_token (install):",
+              sfErr?.message || sfErr,
+            );
+          }
 
           const webhook_array = config.WEBHOOK_ARR;
           let webhook_array_len = webhook_array.length;

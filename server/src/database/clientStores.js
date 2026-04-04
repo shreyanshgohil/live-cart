@@ -20,6 +20,7 @@ const clientStores = new mongoose.Schema({
         },
         charge_id : String,
         token: String,
+        storefront_access_token: String,
         app_language: String,
         shop_name: String,
         shop_plan: String,

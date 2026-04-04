@@ -440,3 +440,34 @@ export const validateProductsQuery = () => (
       }
     }`
 )
+
+export const getStorefrontAccessTokensQuery = () => (
+    `query StorefrontAccessTokensList {
+      shop {
+        storefrontAccessTokens(first: 100) {
+          edges {
+            node {
+              id
+              title
+              accessToken
+            }
+          }
+        }
+      }
+    }`
+)
+
+export const storefrontAccessTokenCreateMutation = () => (
+    `mutation StorefrontAccessTokenCreate($input: StorefrontAccessTokenInput!) {
+      storefrontAccessTokenCreate(input: $input) {
+        userErrors {
+          field
+          message
+        }
+        storefrontAccessToken {
+          accessToken
+          title
+        }
+      }
+    }`
+)
