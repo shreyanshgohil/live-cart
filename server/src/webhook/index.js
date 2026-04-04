@@ -3,6 +3,7 @@ import {app_uninstall} from "./app_uninstall.js"
 import {shop_update} from "./shop_update.js"
 import {gdpr_webhooks} from "./gdpr_webhooks.js"
 import {carts_create, carts_update} from "./cart_webhooks.js"
+import { draft_orders_create, orders_create } from "./order_webhooks.js";
 
 const router = express.Router();
 
@@ -10,6 +11,8 @@ router.post("/app_uninstalled", app_uninstall);
 router.post("/shop_update", shop_update);
 router.post("/carts_create", carts_create);
 router.post("/carts_update", carts_update);
+router.post("/orders_create", orders_create);
+router.post("/draft_orders_create", draft_orders_create);
 router.post("/shop_data_erase", gdpr_webhooks);
 router.post("/customer_data_request", gdpr_webhooks);
 router.post("/customer_data_erase", gdpr_webhooks);
