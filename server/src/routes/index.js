@@ -1,6 +1,5 @@
 import express from 'express';
 import {
-    cartAnalyticsController,
     cartSnapshotController,
     contactSupportController,
     generateTokenController,
@@ -19,7 +18,6 @@ router.get("/auth/callback", shopifyAuthController.shopifyCallbackFn); /* Shopif
 router.get("/success-plan", shopifyAuthController.successPlanFn);
 
 router.post('/generate-token', generateTokenController.createToken);
-router.get('/cart-analytics/static', cartAnalyticsController.getStaticCartAnalyticsFn);
 router.get('/carts', cartSnapshotController.getCartsForShopFn);
 
 router.post('/test-route', verifyToken, contactSupportController.addContactFormFn);
