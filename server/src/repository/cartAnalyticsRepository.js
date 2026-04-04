@@ -55,7 +55,12 @@ const STOREFRONT_CART_QUERY = `
   }
 `;
 
-const fetchCartFromStorefront = async ({ shopDomain, storefrontToken, cartId }) => {
+const fetchCartFromStorefront = async ({
+  shopDomain,
+  storefrontToken,
+  cartId,
+  key,
+}) => {
   const endpoint = `https://${shopDomain}${STOREFRONT_API_VERSION_PATH}/graphql.json`;
   const response = await axios.post(
     endpoint,
@@ -69,7 +74,7 @@ const fetchCartFromStorefront = async ({ shopDomain, storefrontToken, cartId }) 
         "X-Shopify-Storefront-Access-Token": storefrontToken,
       },
       validateStatus: () => true,
-    }
+    },
   );
 
   if (response.status === 401) {
@@ -92,4 +97,3 @@ const fetchCartFromStorefront = async ({ shopDomain, storefrontToken, cartId }) 
 };
 
 export { fetchCartFromStorefront };
-

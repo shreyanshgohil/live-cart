@@ -7,10 +7,13 @@ embedded = true
 
 [webhooks]
 api_version = "2026-04"
+# carts/create and carts/update are subscribed programmatically on OAuth (WEBHOOK_ARR) to
+# POST ${HOST}/webhook/carts_create and carts_update. To manage them in this file instead,
+# see https://shopify.dev/docs/api/webhooks/latest?reference=toml
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_content,read_files,write_content,write_files,write_products,read_themes,unauthenticated_read_customers"
+scopes = "read_content,read_files,write_content,write_files,write_products,read_products,read_orders,read_themes,unauthenticated_read_customers"
 use_legacy_install_flow=true
 
 

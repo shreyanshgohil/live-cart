@@ -1,3 +1,4 @@
+import { clientStoresSchema } from "../database/clientStores.js";
 import { fetchCartFromStorefront } from "../repository/cartAnalyticsRepository.js";
 import {
   findCartSnapshotsByShopDomain,
@@ -110,6 +111,99 @@ const buildGraphPayloadFromCart = (cart, fallbackCartGid) => {
   };
 };
 
+/**
+ * Maps Admin REST-style cart payloads from carts/create and carts/update webhooks
+ * (online store carts only) into the same snapshot shape as Storefront API sync.
+ * @see https://shopify.dev/docs/api/admin-rest/latest/resources/webhook
+ */
+const snapshotDocFromAdminCartWebhook = (shopDomain, body) => {
+  const lineItems = body?.line_items || [];
+  const first = lineItems[0];
+  const currencyCode =
+    first?.line_price_set?.shop_money?.currency_code ||
+    first?.discounted_price_set?.shop_money?.currency_code ||
+    "USD";
+
+  let cartGid = body?.admin_graphql_api_id;
+  if (!cartGid && body?.id != null && body.id !== "") {
+    const raw = String(body.id);
+    cartGid = raw.startsWith("gid://") ? raw : `gid://shopify/Cart/${raw}`;
+  }
+  if (!cartGid) {
+    throw new Error("Cart id missing in webhook payload");
+  }
+
+  const totalQuantity = lineItems.reduce(
+    (sum, li) => sum + Number(li.quantity || 0),
+    0,
+  );
+  const totalAmount = lineItems.reduce(
+    (sum, li) => sum + Number(li.line_price || 0),
+    0,
+  );
+
+  const c = body?.customer || {};
+  const email =
+    (body?.email && String(body.email).trim()) ||
+    (c.email && String(c.email).trim()) ||
+    "";
+  const phone =
+    (body?.phone && String(body.phone).trim()) ||
+    (c.phone && String(c.phone).trim()) ||
+    "";
+
+  const displayName =
+    c.first_name || c.last_name
+      ? [c.first_name, c.last_name].filter(Boolean).join(" ").trim()
+      : "";
+  let customerName = displayName;
+  if (!customerName && email) {
+    customerName = guestNameFromEmail(email);
+  }
+  if (!customerName) {
+    customerName = "Guest";
+  }
+
+  const items = lineItems.map((li) => {
+    const qty = Number(li.quantity || 0);
+    const lineAmount = Number(li.line_price || 0);
+    const unitPrice = qty > 0 ? lineAmount / qty : lineAmount;
+    const liCurrency =
+      li.line_price_set?.shop_money?.currency_code || currencyCode;
+    const variantGid =
+      li.variant_admin_graphql_api_id ||
+      (li.variant_id != null
+        ? `gid://shopify/ProductVariant/${li.variant_id}`
+        : "");
+
+    return {
+      variantGid,
+      title: li.title || "Untitled",
+      sku: li.sku || "—",
+      quantity: qty,
+      unitPrice,
+      lineAmount,
+      currencyCode: liCurrency,
+    };
+  });
+
+  return {
+    shopDomain,
+    cartGid,
+    customerEmail: email || "Not available",
+    customerPhone: phone || "Not available",
+    customerName,
+    totalAmount,
+    currencyCode,
+    totalQuantity,
+    shopifyCartUpdatedAt: body.updated_at
+      ? new Date(body.updated_at)
+      : new Date(),
+    status: "Active",
+    items,
+  };
+};
+
 const snapshotDocFromStorefrontCart = (shopDomain, cart) => {
   const cartGid = cart?.id;
   const buyer = resolveBuyerFromCart(cart);
@@ -136,12 +230,14 @@ const fetchStorefrontCartOrThrow = async ({
   shopDomain,
   storefrontAccessToken,
   cartId,
+  key,
 }) => {
   const normalizedCartId = normalizeCartId(cartId);
   const storefrontResponse = await fetchCartFromStorefront({
     shopDomain,
     storefrontToken: storefrontAccessToken,
     cartId: normalizedCartId,
+    key,
   });
 
   if (storefrontResponse?.errors?.length) {
@@ -212,10 +308,58 @@ const listCartsForShop = async (shopDomain) => {
   return rows.map(formatSnapshotForClient);
 };
 
+const buildStorefrontCartIdFromAdminWebhookBody = (body) => {
+  const token = body?.token ?? body?.id;
+  if (token == null || String(token).trim() === "") {
+    throw new Error("Cart token missing in webhook payload");
+  }
+  const tokenStr = String(token).trim();
+  const rawKey = body?.line_items?.[0]?.key;
+  if (rawKey == null || String(rawKey).trim() === "") {
+    throw new Error("line_items[0].key missing in webhook payload");
+  }
+  let keyParam = String(rawKey).trim();
+  const colon = keyParam.indexOf(":");
+  if (colon !== -1) {
+    keyParam = keyParam.slice(colon + 1).trim();
+  }
+  if (!keyParam) {
+    throw new Error("Could not derive cart key from line_items[0].key");
+  }
+  return `gid://shopify/Cart/${tokenStr}?key=${keyParam}`;
+};
+
+const syncCartSnapshotFromAdminCartWebhook = async (shopDomain, body) => {
+  const cartGid = buildStorefrontCartIdFromAdminWebhookBody(body);
+  const store = await clientStoresSchema
+    .findOne(
+      { store_name: shopDomain, status: "1" },
+      { storefront_access_token: 1 },
+    )
+    .lean();
+  const storefrontAccessToken = store?.storefront_access_token;
+  if (!storefrontAccessToken) {
+    throw new Error(
+      "storefront_access_token missing for shop; reinstall app or complete OAuth",
+    );
+  }
+  const { cart } = await fetchStorefrontCartOrThrow({
+    shopDomain,
+    storefrontAccessToken,
+    cartId: cartGid,
+    key: body.line_items[0].key,
+  });
+  const doc = snapshotDocFromStorefrontCart(shopDomain, cart);
+  await upsertCartSnapshot(doc);
+};
+
 export {
   buildGraphPayloadFromCart,
+  buildStorefrontCartIdFromAdminWebhookBody,
   fetchStorefrontCartOrThrow,
   listCartsForShop,
   normalizeCartId,
+  snapshotDocFromAdminCartWebhook,
   syncCartFromStorefront,
+  syncCartSnapshotFromAdminCartWebhook,
 };
